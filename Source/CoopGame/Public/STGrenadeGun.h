@@ -14,10 +14,11 @@ class COOPGAME_API ASTGrenadeGun : public ASTWeapon
 	GENERATED_BODY()
 
 protected:
+	ASTGrenadeGun();
+
 	virtual void Fire() override;
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category="Projectile")
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	TSubclassOf<ASTGrenade> ProjectileClass;
-
 };

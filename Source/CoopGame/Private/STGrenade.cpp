@@ -30,6 +30,7 @@ void ASTGrenade::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimit
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL) && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
+		return;
 	}
 
 	MakeNoise(1.0f, GetInstigator());

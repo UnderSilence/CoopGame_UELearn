@@ -5,6 +5,12 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "STGrenade.h"
+
+ASTGrenadeGun::ASTGrenadeGun()
+{
+	MuzzleSocketName = "MuzzleFlashSocket";
+}
 
 void ASTGrenadeGun::Fire()
 {
