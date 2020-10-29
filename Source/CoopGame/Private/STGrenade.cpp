@@ -30,7 +30,7 @@ void ASTGrenade::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimit
 {
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL))
 	{
-		DrawDebugSphere(GetWorld(), GetActorLocation(), 20.0f, 20, FColor::Red, false, 1.0f, 1.0f, 1.0f);
+		DrawDebugSphere(GetWorld(), GetActorLocation(), 23.0f, 20, FColor::Red, false, 1.0f, 1.0f, 1.0f);
 		// OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 		return;
 	}
