@@ -28,15 +28,10 @@ ASTWeapon::ASTWeapon()
 	TracerTargetName = "Target";
 }
 
-// Called when the game starts or when spawned
-void ASTWeapon::BeginPlay()
-{
-	Super::BeginPlay();
-}
 
 void ASTWeapon::Fire()
 {
-	// Trace the world from pawn eye to crosshair location
+	// Trace the world from pawn eye to cross hair location
 
 	AActor* MyOwner = GetOwner();
 	if (MyOwner) {
@@ -70,24 +65,21 @@ void ASTWeapon::Fire()
 		if (DebugWeaponDrawing > 0) {
 			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.0f, 0, 1.0f);
 		}
-		if (MuzzleEffect) {
-			UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
-		}
-		if (TracerEffect) {
-			FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
 
-			UParticleSystemComponent* TracerComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
-			if (TracerComp) {
-				TracerComp->SetVectorParameter(TracerTargetName, TracerEndPoint);
-			}
-		}
+		PlayFireEffects(TraceEnd);
 	}
 }
 
-// Called every frame
-void ASTWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+void ASTWeapon::PlayFireEffects(FVector TracerEndPoint) {
+    if (MuzzleEffect) {
+        UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
+    }
+    if (TracerEffect) {
+        FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
 
+        UParticleSystemComponent* TracerComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
+        if (TracerComp) {
+            TracerComp->SetVectorParameter(TracerTargetName, TracerEndPoint);
+        }
+    }
 }
-
