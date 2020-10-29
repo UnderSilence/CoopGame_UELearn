@@ -23,13 +23,14 @@ ASTGrenade::ASTGrenade()
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = true;
 
-	InitialLifeSpan = 1.5f;
+	InitialLifeSpan = 1.0f;
 }
 
 void ASTGrenade::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL))
 	{
+		DrawDebugSphere(GetWorld(), GetActorLocation(), 20.0f, 20, FColor::Red, false, 1.0f, 1.0f, 1.0f);
 		// OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 		return;
 	}

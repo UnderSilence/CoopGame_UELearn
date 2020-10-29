@@ -48,7 +48,7 @@ void ASTWeapon::Fire()
 
 		FHitResult Hit;
 		if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, ECC_Visibility, QueryParams)) {
-			// Blocking hit! Process demage
+			// Blocking hit! Process damage
 
 			AActor* HitActor = Hit.GetActor();
 
