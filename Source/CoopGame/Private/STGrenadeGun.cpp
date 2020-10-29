@@ -20,6 +20,8 @@ void ASTGrenadeGun::Fire()
 		FVector EyeLocation;
 		FRotator EyeRotation;
 		MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+		// Turn up a little bit
+		EyeRotation.Pitch += 20.0f;
 
 		FVector ShotDirection = EyeRotation.Vector();
 		FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
