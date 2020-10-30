@@ -1,11 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "STWeapon.h"
 #include "DrawDebugHelpers.h"
 #include "kismet/GameplayStatics.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "TimerManager.h"
+#include "../CoopGame.h"
 
 int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing(
@@ -26,8 +28,20 @@ ASTWeapon::ASTWeapon()
 
 	MuzzleSocketName = "MuzzleSocket";
 	TracerTargetName = "Target";
+
+	BaseDamage = 20.0f;
+
+	// RPM - bullets per minutes
+	RateOfFire = 600.0f;
 }
 
+
+void ASTWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	TimeBetweenShots = 60 / RateOfFire;
+}
 
 void ASTWeapon::Fire()
 {
@@ -46,40 +60,85 @@ void ASTWeapon::Fire()
 		QueryParams.AddIgnoredActor(MyOwner);
 		QueryParams.AddIgnoredActor(this);
 		QueryParams.bTraceComplex = true;
+		QueryParams.bReturnPhysicalMaterial = true;
 
 		FVector TracerEndPoint = TraceEnd;
 
 		FHitResult Hit;
-		if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, ECC_Visibility, QueryParams)) {
+		if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams)) {
 			// Blocking hit! Process damage
 
 			AActor* HitActor = Hit.GetActor();
 
-			UGameplayStatics::ApplyPointDamage(HitActor, 20.0f, ShotDirection, Hit, MyOwner->GetInstigatorController(), this, DamageType);
-			if (ImpactEffect) {
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
+			EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+
+			UParticleSystem* SelectedImpactEffect = nullptr;
+
+			float ActualDamage = BaseDamage;
+			if (SurfaceType == SURFACE_FLESHVULNERABLE) {
+				ActualDamage *= 10.0f;
+			}
+
+			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), this, DamageType);
+
+			switch (SurfaceType)
+			{
+			case SURFACE_FLESHDEFAULT:
+			case SURFACE_FLESHVULNERABLE:
+				SelectedImpactEffect = FleshImpactEffect;
+				break;
+			default:
+				SelectedImpactEffect = DefaultImpactEffect;
+				break;
+			}
+
+			if (SelectedImpactEffect) {
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
 			}
 
 			TracerEndPoint = Hit.ImpactPoint;
 		}
 		if (DebugWeaponDrawing > 0) {
-			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.0f, 0, 1.0f);
+			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, TimeBetweenShots, 0, 1.0f);
 		}
 
 		PlayFireEffects(TraceEnd);
+		
+		LastFireTime = GetWorld()->GetTimeSeconds();
 	}
 }
 
-void ASTWeapon::PlayFireEffects(FVector TracerEndPoint) {
-    if (MuzzleEffect) {
-        UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
-    }
-    if (TracerEffect) {
-        FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+void ASTWeapon::StartFire()
+{
+	float FirstDelay = FMath::Max(0.0f, TimeBetweenShots - GetWorld()->TimeSeconds);
 
-        UParticleSystemComponent* TracerComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
-        if (TracerComp) {
-            TracerComp->SetVectorParameter(TracerTargetName, TracerEndPoint);
-        }
-    }
+	GetWorldTimerManager().SetTimer(TimerHandle_TimeBetweenShots, this, &ASTWeapon::Fire, TimeBetweenShots, true, FirstDelay);
+}
+
+void ASTWeapon::StopFire()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_TimeBetweenShots);
+}
+
+void ASTWeapon::PlayFireEffects(FVector TracerEndPoint) {
+	if (MuzzleEffect) {
+		UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
+	}
+
+	if (TracerEffect) {
+		FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+
+		UParticleSystemComponent* TracerComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
+		if (TracerComp) {
+			TracerComp->SetVectorParameter(TracerTargetName, TracerEndPoint);
+		}
+	}
+
+	auto MyOwnerPawn = Cast<APawn>(GetOwner());
+	if (MyOwnerPawn) {
+		auto PC = Cast<APlayerController>(MyOwnerPawn->GetController());
+		if (PC) {
+			PC->ClientPlayCameraShake(FireCamShake);
+		}
+	}
 }

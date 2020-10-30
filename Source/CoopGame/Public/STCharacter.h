@@ -56,7 +56,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Player")
 	TSubclassOf<ASTWeapon> StaterWeaponClass;
 
-	void Fire();
+	void StartFire();
+
+	void StopFire();
 
 	UPROPERTY(VisibleDefaultsOnly, Category="Player")
 	FName WeaponAttachSocketName;

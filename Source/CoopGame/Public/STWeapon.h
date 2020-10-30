@@ -8,6 +8,7 @@
 
 class USkeletalMeshComponent;
 class UParticleSystem;
+class UCameraShake;
 
 UCLASS()
 class COOPGAME_API ASTWeapon : public AActor
@@ -19,6 +20,8 @@ public:
 	ASTWeapon();
 
 protected:
+
+	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Components")
 	USkeletalMeshComponent* MeshComp;
@@ -36,15 +39,36 @@ protected:
 	UParticleSystem* MuzzleEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	UParticleSystem* ImpactEffect;
+	UParticleSystem* DefaultImpactEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	UParticleSystem* FleshImpactEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* TracerEffect;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<UCameraShake> FireCamShake;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float BaseDamage;
+
+	virtual void Fire();
+
+	FTimerHandle TimerHandle_TimeBetweenShots;
+
+	float LastFireTime;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float RateOfFire;
+
+	float TimeBetweenShots;
+
 public:	
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    virtual void Fire();
+	void StartFire();
+
+	void StopFire();
 
 	void PlayFireEffects(FVector TracerEndPoint);
 };
