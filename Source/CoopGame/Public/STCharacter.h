@@ -9,6 +9,7 @@
 class UCameraComponent;
 class USpringArmComponent;
 class ASTWeapon;
+class USTHealthComponent;
 
 UCLASS()
 class COOPGAME_API ASTCharacter : public ACharacter
