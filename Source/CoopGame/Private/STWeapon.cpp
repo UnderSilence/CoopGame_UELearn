@@ -80,6 +80,7 @@ void ASTWeapon::Fire()
 			}
 
 			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), this, DamageType);
+            DrawDebugString(GetWorld(), Hit.ImpactPoint, HitActor->GetName(), 0, FColor::Red, 1.0f, false, 1.0f);
 
 			switch (SurfaceType)
 			{

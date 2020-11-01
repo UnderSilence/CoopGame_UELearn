@@ -8,6 +8,7 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "../CoopGame.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/STHealthComponent.h"
 
 // Sets default values
 ASTCharacter::ASTCharacter() {
@@ -24,11 +25,12 @@ ASTCharacter::ASTCharacter() {
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
 
+	HealthComp = CreateDefaultSubobject<USTHealthComponent>(TEXT("HealthComp"));
+
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
 
 	ZoomedFOV = 60;
-
 	WeaponAttachSocketName = "WeaponSocket";
 }
 
@@ -49,6 +51,8 @@ void ASTCharacter::BeginPlay() {
 			CurrentWeapon->SetOwner(this);
 		}
 	}
+
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASTCharacter::OnHealthChanged);
 }
 
 void ASTCharacter::MoveForward(float Value) {
@@ -86,6 +90,21 @@ void ASTCharacter::StopFire()
 {
 	if (CurrentWeapon) {
 		CurrentWeapon->StopFire();
+	}
+}
+
+void ASTCharacter::OnHealthChanged(USTHealthComponent* ThisHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, 
+	class AController* InstigatedBy, AActor* DamageCauser) {
+	if (!bDied && Health <= 0.0f) {
+		//Player Die!
+        bDied = true;
+
+		GetMovementComponent()->StopMovementImmediately();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		DetachFromControllerPendingDestroy();
+
+		SetLifeSpan(10.0f);
 	}
 }
 

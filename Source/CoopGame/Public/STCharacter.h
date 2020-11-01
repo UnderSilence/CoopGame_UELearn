@@ -38,6 +38,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USpringArmComponent* SpringArmComp;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USTHealthComponent* HealthComp;
+
 	bool bWantsZoom;
 
 	UPROPERTY(EditDefaultsOnly, Category="Player")
@@ -63,6 +66,12 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, Category="Player")
 	FName WeaponAttachSocketName;
+
+	UFUNCTION()
+	void OnHealthChanged(USTHealthComponent* ThisHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+	UPROPERTY(BlueprintReadOnly, Category="Player")
+	bool bDied;
 
 public:	
 	// Called every frame
