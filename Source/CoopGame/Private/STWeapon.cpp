@@ -8,6 +8,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "TimerManager.h"
 #include "../CoopGame.h"
+#include "Net/UnrealNetwork.h"
 
 int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing(
@@ -33,6 +34,11 @@ ASTWeapon::ASTWeapon()
 
 	// RPM - bullets per minutes
 	RateOfFire = 600.0f;
+
+	SetReplicates(true);
+
+	NetUpdateFrequency = 66.0f;
+	MinNetUpdateFrequency = 33.0f;
 }
 
 
@@ -43,9 +49,13 @@ void ASTWeapon::BeginPlay()
 	TimeBetweenShots = 60 / RateOfFire;
 }
 
+// Fire function need to be replicated, like RPC
 void ASTWeapon::Fire()
 {
 	// Trace the world from pawn eye to cross hair location
+	if (GetLocalRole() < ROLE_Authority) {
+		ServerFire();
+	}
 
 	AActor* MyOwner = GetOwner();
 	if (MyOwner) {
@@ -63,6 +73,7 @@ void ASTWeapon::Fire()
 		QueryParams.bReturnPhysicalMaterial = true;
 
 		FVector TracerEndPoint = TraceEnd;
+		EPhysicalSurface SurfaceType = SurfaceType_Default;
 
 		FHitResult Hit;
 		if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams)) {
@@ -70,9 +81,8 @@ void ASTWeapon::Fire()
 
 			AActor* HitActor = Hit.GetActor();
 
-			EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+			SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
 
-			UParticleSystem* SelectedImpactEffect = nullptr;
 
 			float ActualDamage = BaseDamage;
 			if (SurfaceType == SURFACE_FLESHVULNERABLE) {
@@ -80,22 +90,9 @@ void ASTWeapon::Fire()
 			}
 
 			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), this, DamageType);
-            // DrawDebugString(GetWorld(), Hit.ImpactPoint, HitActor->GetName(), 0, FColor::Red, 1.0f, false, 1.0f);
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10, 12, FColor::Yellow, false, 1.0f, 0, 1.0f);
 
-			switch (SurfaceType)
-			{
-			case SURFACE_FLESHDEFAULT:
-			case SURFACE_FLESHVULNERABLE:
-				SelectedImpactEffect = FleshImpactEffect;
-				break;
-			default:
-				SelectedImpactEffect = DefaultImpactEffect;
-				break;
-			}
-
-			if (SelectedImpactEffect) {
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
-			}
+			PlayImpactEffects(SurfaceType, Hit.ImpactPoint);
 
 			TracerEndPoint = Hit.ImpactPoint;
 		}
@@ -103,10 +100,33 @@ void ASTWeapon::Fire()
 			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, TimeBetweenShots, 0, 1.0f);
 		}
 
-		PlayFireEffects(TraceEnd);
-		
+		PlayFireEffects(TracerEndPoint);
+
+		if (HasAuthority()) {
+			HitScanTrace.TraceTo = TracerEndPoint;
+			HitScanTrace.SurfaceType = SurfaceType;
+		}
+
 		LastFireTime = GetWorld()->GetTimeSeconds();
 	}
+}
+
+
+void ASTWeapon::OnRep_HitScanTrace()
+{
+	// Play cosmetic 
+	PlayFireEffects(HitScanTrace.TraceTo);
+	PlayImpactEffects(HitScanTrace.SurfaceType, HitScanTrace.TraceTo);
+}
+
+void ASTWeapon::ServerFire_Implementation()
+{
+	Fire();
+}
+
+bool ASTWeapon::ServerFire_Validate()
+{
+	return true;
 }
 
 void ASTWeapon::StartFire()
@@ -142,4 +162,36 @@ void ASTWeapon::PlayFireEffects(FVector TracerEndPoint) {
 			PC->ClientPlayCameraShake(FireCamShake);
 		}
 	}
+}
+
+
+void ASTWeapon::PlayImpactEffects(EPhysicalSurface SurfaceType, FVector ImpactPoint)
+{
+	UParticleSystem* SelectedImpactEffect = nullptr;
+	switch (SurfaceType)
+	{
+	case SURFACE_FLESHDEFAULT:
+	case SURFACE_FLESHVULNERABLE:
+		SelectedImpactEffect = FleshImpactEffect;
+		break;
+	default:
+		SelectedImpactEffect = DefaultImpactEffect;
+		break;
+	}
+
+	if (SelectedImpactEffect) {
+		FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+		FVector ShotDirection = ImpactPoint - MuzzleLocation;
+		ShotDirection.Normalize();
+
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedImpactEffect, ImpactPoint, ShotDirection.Rotation());
+	}
+}
+
+void ASTWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// register property which is needed
+	DOREPLIFETIME_CONDITION(ASTWeapon, HitScanTrace, COND_SkipOwner);
 }

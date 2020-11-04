@@ -11,6 +11,7 @@ class USpringArmComponent;
 class ASTWeapon;
 class USTHealthComponent;
 
+
 UCLASS()
 class COOPGAME_API ASTCharacter : public ACharacter
 {
@@ -55,6 +56,7 @@ protected:
 
 	void EndZoom();
 
+	UPROPERTY(Replicated)
 	ASTWeapon* CurrentWeapon;
 
 	UPROPERTY(EditDefaultsOnly, Category="Player")
@@ -70,8 +72,9 @@ protected:
 	UFUNCTION()
 	void OnHealthChanged(USTHealthComponent* ThisHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
-	UPROPERTY(BlueprintReadOnly, Category="Player")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category="Player")
 	bool bDied;
+
 
 public:	
 	// Called every frame

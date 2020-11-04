@@ -9,6 +9,7 @@
 #include "../CoopGame.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/STHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ASTCharacter::ASTCharacter() {
@@ -26,6 +27,8 @@ ASTCharacter::ASTCharacter() {
 	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
 
 	HealthComp = CreateDefaultSubobject<USTHealthComponent>(TEXT("HealthComp"));
+	// Sometimes move AddDynamic to BeginPlay would cause Editor Crash!
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASTCharacter::OnHealthChanged);
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
@@ -40,19 +43,21 @@ void ASTCharacter::BeginPlay() {
 
 	DefaultFOV = CameraComp->FieldOfView;
 
-	if (StaterWeaponClass) {
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	if (HasAuthority()) {
+		if (StaterWeaponClass) {
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		CurrentWeapon = GetWorld()->SpawnActor<ASTWeapon>(StaterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+			// At client this variable not set
+			CurrentWeapon = GetWorld()->SpawnActor<ASTWeapon>(StaterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
 
-		if (CurrentWeapon) {
-			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
-			CurrentWeapon->SetOwner(this);
+			if (CurrentWeapon) {
+				CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
+				CurrentWeapon->SetOwner(this);
+			}
 		}
 	}
 
-	HealthComp->OnHealthChanged.AddDynamic(this, &ASTCharacter::OnHealthChanged);
 }
 
 void ASTCharacter::MoveForward(float Value) {
@@ -108,6 +113,7 @@ void ASTCharacter::OnHealthChanged(USTHealthComponent* ThisHealthComp, float Hea
 	}
 }
 
+
 // Called every frame
 void ASTCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
@@ -151,3 +157,12 @@ FVector ASTCharacter::GetPawnViewLocation() const {
 }
 
 
+
+void ASTCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// register property which is needed
+	DOREPLIFETIME(ASTCharacter, CurrentWeapon)
+	DOREPLIFETIME(ASTCharacter, bDied);
+}

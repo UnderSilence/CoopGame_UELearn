@@ -10,6 +10,20 @@ class USkeletalMeshComponent;
 class UParticleSystem;
 class UCameraShake;
 
+// Contains information of a single hit scan weapon line trace
+USTRUCT()
+struct FHitScanTrace {
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TEnumAsByte<EPhysicalSurface> SurfaceType;
+
+	UPROPERTY()
+	FVector_NetQuantize TraceTo;
+};
+
+
 UCLASS()
 class COOPGAME_API ASTWeapon : public AActor
 {
@@ -64,11 +78,22 @@ protected:
 
 	float TimeBetweenShots;
 
+	// RPC settings, client send StartFire() request to server
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire();
+
+	UPROPERTY(ReplicatedUsing = OnRep_HitScanTrace)
+	FHitScanTrace HitScanTrace;
+
+	UFUNCTION()
+	void OnRep_HitScanTrace();
+
+	void PlayFireEffects(FVector TracerEndPoint);
+
+	void PlayImpactEffects(EPhysicalSurface SurfaceType, FVector ImpactPoint);
 public:	
 
 	void StartFire();
 
 	void StopFire();
-
-	void PlayFireEffects(FVector TracerEndPoint);
 };
