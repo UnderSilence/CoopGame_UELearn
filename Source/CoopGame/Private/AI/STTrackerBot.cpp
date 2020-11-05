@@ -49,8 +49,10 @@ void ASTTrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// find initial target
-	NextPathPoint = GetNextPathPoint();
+	if (HasAuthority()) {
+		// find initial target
+		NextPathPoint = GetNextPathPoint();
+	}
 }
 
 void ASTTrackerBot::HandleTakeDamage(USTHealthComponent* ThisHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
@@ -120,23 +122,24 @@ void ASTTrackerBot::DamageSelf()
 void ASTTrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (HasAuthority()) {
+		float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
 
-	float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
+		if (DistanceToTarget <= RequiredDistanceToTarget) {
+			NextPathPoint = GetNextPathPoint();
+			DrawDebugString(GetWorld(), GetActorLocation(), "Reached Target!", 0, FColor::Yellow, 1.0f, false, 1.0f);
+		}
+		else {
+			// Keep moving towards next target
+			FVector ForceDirection = NextPathPoint - GetActorLocation();
+			ForceDirection.Normalize();
 
-	if (DistanceToTarget <= RequiredDistanceToTarget) {
-		NextPathPoint = GetNextPathPoint();
-		DrawDebugString(GetWorld(), GetActorLocation(), "Reached Target!", 0, FColor::Yellow, 1.0f, false, 1.0f);
+			MeshComp->AddForce(ForceDirection * MovementForce, NAME_None, bUseVelocityChange);
+			DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection * MovementForce, 64, FColor::Yellow, false, 0.0f, 0, 1.0f);
+		}
+
+		DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 0, 1.0f);
 	}
-	else {
-		// Keep moving towards next target
-		FVector ForceDirection = NextPathPoint - GetActorLocation();
-		ForceDirection.Normalize();
-
-		MeshComp->AddForce(ForceDirection * MovementForce, NAME_None, bUseVelocityChange);
-		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection * MovementForce, 64, FColor::Yellow, false, 0.0f, 0, 1.0f);
-	}
-
-	DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 0, 1.0f);
 }
 
 void ASTTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
