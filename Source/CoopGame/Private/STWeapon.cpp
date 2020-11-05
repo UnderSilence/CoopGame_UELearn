@@ -90,7 +90,7 @@ void ASTWeapon::Fire()
 			}
 
 			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), this, DamageType);
-			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10, 12, FColor::Yellow, false, 1.0f, 0, 1.0f);
+			// DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 10, 12, FColor::Yellow, false, 1.0f, 0, 1.0f);
 
 			PlayImpactEffects(SurfaceType, Hit.ImpactPoint);
 
