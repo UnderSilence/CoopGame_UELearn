@@ -9,7 +9,8 @@ USTHealthComponent::USTHealthComponent()
 {
 	DefaultHealthPoint = 100.0f;
 
-	// SetIsReplicated(true);
+	// 设置多人游戏客户端与服务端数据同步，非常重要
+	SetIsReplicated(true);
 }
 
 
@@ -27,6 +28,13 @@ void USTHealthComponent::BeginPlay()
 	}
 
 	HealthPoint = DefaultHealthPoint;
+}
+
+// 留给Client调用的，血量变化回调，让Client可以触发血量变化事件从而同步状态。
+void USTHealthComponent::OnRep_Health(float OldHealthPoint)
+{
+	float Damage = OldHealthPoint - HealthPoint;
+	OnHealthChanged.Broadcast(this, HealthPoint, Damage, nullptr, nullptr, nullptr);
 }
 
 void USTHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
