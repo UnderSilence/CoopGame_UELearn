@@ -26,9 +26,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleDefaultsOnly, Category="Components")
-	UStaticMeshComponent* MeshComp;
+	UStaticMeshComponent* MeshComp; 
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	USTHealthComponent* HealthComp;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
