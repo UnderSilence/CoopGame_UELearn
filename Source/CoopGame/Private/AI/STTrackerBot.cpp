@@ -108,7 +108,7 @@ void ASTTrackerBot::SelfDestruct()
 
 	// Apply damage
 	UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
-	DrawDebugSphere(GetWorld(), NextPathPoint, ExplosionRadius, 20, FColor::Red, false, 2.0f, 0, 1.0f);
+	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 20, FColor::Red, false, 2.0f, 0, 1.0f);
 
 	Destroy();
 }
