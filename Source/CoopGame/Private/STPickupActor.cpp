@@ -4,6 +4,7 @@
 #include "STPickupActor.h"
 #include <Components/SphereComponent.h>
 #include <Components/DecalComponent.h>
+#include "STPowerupActor.h"
 
 // Sets default values
 ASTPickupActor::ASTPickupActor()
@@ -26,7 +27,20 @@ ASTPickupActor::ASTPickupActor()
 void ASTPickupActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Respawn();
+}
+
+void ASTPickupActor::Respawn() {
+	if (PowerupClass == nullptr) {
+		UE_LOG(LogTemp, Warning, TEXT("PowerupClass is nullptr in %s, Please update your Blueprint"), *GetName());
+		return;
+	}
+
+	// Initialize spawn parameters
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	PowerupInstance = GetWorld()->SpawnActor<ASTPowerupActor>(PowerupClass, GetTransform(), SpawnParams);
 }
 
 void ASTPickupActor::NotifyActorBeginOverlap(AActor* OtherActor) {
@@ -34,7 +48,13 @@ void ASTPickupActor::NotifyActorBeginOverlap(AActor* OtherActor) {
 	Super::NotifyActorBeginOverlap(OtherActor);
 	
 	// @TODO: Grant a powerup to player if available
+	if (PowerupInstance) {
+		PowerupInstance->ActivatePowerup();
+		PowerupInstance = nullptr;
 
+		// Set Timer to respawn
+		GetWorldTimerManager().SetTimer(TimerHandle_RespawnTimer, this, &ASTPickupActor::Respawn, CooldownDuration);
+	}
 }
 
 /*

@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UDecalComponent;
+class ASTPowerupActor;
 
 UCLASS()
 class COOPGAME_API ASTPickupActor : public AActor
@@ -27,6 +28,18 @@ protected:
 
     UPROPERTY(VisibleAnywhere, Category = "Components")
     UDecalComponent* DecalComp;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PickupActors")
+	TSubclassOf<ASTPowerupActor> PowerupClass;
+
+    ASTPowerupActor* PowerupInstance;
+
+    UPROPERTY(EditDefaultsOnly, Category = "PickupActors")
+	float CooldownDuration;
+
+	void Respawn();
+
+	FTimerHandle TimerHandle_RespawnTimer;
 
 public:	
 	// Called every frame

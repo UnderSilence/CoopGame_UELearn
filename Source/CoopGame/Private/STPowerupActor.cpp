@@ -37,5 +37,6 @@ void ASTPowerupActor::ActivatePowerup() {
     } else {
         OnTickPowerup();
     }
+    OnActivated();
 }
 
