@@ -34,6 +34,9 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	USphereComponent* SphereComp;
 
+    UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	USphereComponent* AllianceSphereComp;
+
 	// Remember to set binding function to UFUNTION()
 	UFUNCTION()
 	void HandleTakeDamage(USTHealthComponent* ThisHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType,
@@ -68,12 +71,16 @@ protected:
 	float ExplosionRadius;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+	float DefaultExplosionDamage;
+
 	float ExplosionDamage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float SelfDamageInterval;
 
 	FTimerHandle TimerHandle_SelfDamage;
+
+	FTimerHandle TimerHandle_SearchAlliance;
 
 	void DamageSelf();
 
@@ -83,9 +90,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	USoundCue* SelfDestructionSound;
 
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+	int32 MaxPowerLevel;
+	
+	int32 CurrentPowerLevel;
+
+	void SearchAlliance();
+
+	UFUNCTION()
+	void OnTriggerSelfDestruct(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	// bool bStopped;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	// virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 };
