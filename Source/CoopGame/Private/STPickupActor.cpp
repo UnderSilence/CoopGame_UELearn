@@ -14,6 +14,8 @@ ASTPickupActor::ASTPickupActor()
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SphereComp->SetSphereRadius(75.0f);
+    SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+    SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	RootComponent = SphereComp;
 
 	DecalComp = CreateDefaultSubobject<UDecalComponent>(TEXT("DecalComp"));
@@ -50,18 +52,10 @@ void ASTPickupActor::NotifyActorBeginOverlap(AActor* OtherActor) {
 	// @TODO: Grant a powerup to player if available
 	if (PowerupInstance) {
 		PowerupInstance->ActivatePowerup();
+		// Player pickup the PowerupInstance
 		PowerupInstance = nullptr;
 
 		// Set Timer to respawn
-		GetWorldTimerManager().SetTimer(TimerHandle_RespawnTimer, this, &ASTPickupActor::Respawn, CooldownDuration);
+		GetWorldTimerManager().SetTimer(TimerHandle_RespawnTimer, this, &ASTPickupActor::Respawn, CooldownDuration, false);
 	}
 }
-
-/*
-// Called every frame
-void ASTPickupActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-*/
