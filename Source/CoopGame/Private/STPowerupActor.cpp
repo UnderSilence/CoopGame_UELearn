@@ -3,6 +3,7 @@
 
 #include "STPowerupActor.h"
 #include "TimerManager.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ASTPowerupActor::ASTPowerupActor() {
@@ -11,12 +12,9 @@ ASTPowerupActor::ASTPowerupActor() {
     PowerupInterval = 0.0f;
     TotalNrOfTicks = 0.0f;
     TicksProcessed = 0;
-}
+    bIsPowerupActive = false;
 
-// Called when the game starts or when spawned
-void ASTPowerupActor::BeginPlay() {
-    Super::BeginPlay();
-
+    SetReplicates(true);
 }
 
 void ASTPowerupActor::OnTickPowerup() {
@@ -31,13 +29,30 @@ void ASTPowerupActor::OnTickPowerup() {
     }
 }
 
-void ASTPowerupActor::ActivatePowerup() {
-    OnActivated();
+void ASTPowerupActor::OnRep_PowerupActive()
+{
+    OnPowerupStateChanged(bIsPowerupActive);
+}
+
+void ASTPowerupActor::ActivatePowerup(AActor* ActiveFor) {
+    OnActivated(ActiveFor);
+
+    bIsPowerupActive = true;
+    // Only run on server
+    OnRep_PowerupActive();
 
     if (PowerupInterval > 0.0f) {
-        GetWorldTimerManager().SetTimer(TimerHandle_PowerupTick, this, &ASTPowerupActor::OnTickPowerup, PowerupInterval, true, 0.0f);
+        GetWorldTimerManager().SetTimer(TimerHandle_PowerupTick, this, &ASTPowerupActor::OnTickPowerup, PowerupInterval, true);
     } else {
         OnTickPowerup();
     }
 }
 
+
+void ASTPowerupActor::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// register property which is needed
+	DOREPLIFETIME(ASTPowerupActor, bIsPowerupActive);
+}

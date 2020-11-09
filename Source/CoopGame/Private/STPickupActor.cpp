@@ -23,13 +23,18 @@ ASTPickupActor::ASTPickupActor()
 	DecalComp->DecalSize = FVector(64.0f, 75.0f, 75.0f);
 	DecalComp->SetupAttachment(RootComponent);
 
+	CooldownDuration = 5.0f;
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
 void ASTPickupActor::BeginPlay()
 {
 	Super::BeginPlay();
-	Respawn();
+	if (HasAuthority()) {
+		Respawn();
+	}
 }
 
 void ASTPickupActor::Respawn() {
@@ -50,8 +55,8 @@ void ASTPickupActor::NotifyActorBeginOverlap(AActor* OtherActor) {
 	Super::NotifyActorBeginOverlap(OtherActor);
 	
 	// @TODO: Grant a powerup to player if available
-	if (PowerupInstance) {
-		PowerupInstance->ActivatePowerup();
+	if (HasAuthority() && PowerupInstance) {
+		PowerupInstance->ActivatePowerup(OtherActor);
 		// Player pickup the PowerupInstance
 		PowerupInstance = nullptr;
 

@@ -45,11 +45,23 @@ void USTHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage,
 
 	HealthPoint = FMath::Clamp(HealthPoint - Damage, 0.0f, DefaultHealthPoint);
 
-	// UE_LOG(LogTemp, Log, TEXT("Health Changed: %s"), *FString::SanitizeFloat(HealthPoint));
+	 UE_LOG(LogTemp, Log, TEXT("Health Changed: %s"), *FString::SanitizeFloat(HealthPoint));
 
 	OnHealthChanged.Broadcast(this, HealthPoint, Damage, DamageType, InstigatedBy, DamageCauser);
 }
 
+void USTHealthComponent::Heal(float HealAmount)
+{
+	if (HealAmount <= 0.0f || HealthPoint <= 0.0f) {
+		return;
+	}
+	
+	HealthPoint = FMath::Min(HealthPoint + HealAmount, DefaultHealthPoint);
+
+	UE_LOG(LogTemp, Log, TEXT("Health Changed: %s (+%s)"), *FString::SanitizeFloat(HealthPoint), *FString::SanitizeFloat(HealAmount));
+	
+	OnHealthChanged.Broadcast(this, HealthPoint, -HealAmount, nullptr, nullptr, nullptr);
+}
 
 void USTHealthComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {

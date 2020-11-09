@@ -145,7 +145,7 @@ void ASTTrackerBot::DamageSelf()
 void ASTTrackerBot::SearchAlliance() {
 	TSet<AActor*> Neighbers;
 	AllianceSphereComp->GetOverlappingActors(Neighbers, ASTTrackerBot::StaticClass());
-	DrawDebugSphere(GetWorld(), GetActorLocation(), AllianceSphereComp->GetScaledSphereRadius(), 20, FColor::White, false, 1.0f, 0, 1.0f);
+	// DrawDebugSphere(GetWorld(), GetActorLocation(), AllianceSphereComp->GetScaledSphereRadius(), 20, FColor::White, false, 1.0f, 0, 1.0f);
 	CurrentPowerLevel = FMath::Min(MaxPowerLevel, FMath::Max(0, Neighbers.Num()-1));
 	float PowerLevelAlpha = CurrentPowerLevel / (float)MaxPowerLevel;
 
