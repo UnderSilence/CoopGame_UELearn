@@ -6,13 +6,16 @@
 #include "Components/STHealthComponent.h"
 #include "EngineUtils.h"
 #include "STGameState.h"
+#include "STPlayerState.h"
 
 
 ASTGameMode::ASTGameMode()
 {
 	TimeBetweenWaves = 2.0f;
 	WaveCount = 0;
+
 	GameStateClass = ASTGameState::StaticClass();
+	PlayerStateClass = ASTPlayerState::StaticClass();
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1.0f;
@@ -25,6 +28,8 @@ void ASTGameMode::StartWave()
 	NrOfBotToSpawn = 2 * WaveCount;
 
 	GetWorldTimerManager().SetTimer(TimerHandle_BotSpawner, this, &ASTGameMode::SpawnBotTimerElapsed, 1.0f, true, 0.0f);
+
+	SetWaveState(EWaveState::WaveInProgress);
 }
 
 void ASTGameMode::SpawnBotTimerElapsed()
@@ -42,12 +47,14 @@ void ASTGameMode::EndWave()
 {
 	GetWorldTimerManager().ClearTimer(TimerHandle_BotSpawner);
 
-	// PrepareForNextWave();
+	SetWaveState(EWaveState::WaitingToComplete);
 }
 
 void ASTGameMode::PrepareForNextWave()
 {
 	GetWorldTimerManager().SetTimer(TimerHandle_NextWaveStart, this, &ASTGameMode::StartWave, TimeBetweenWaves, false);
+	
+	SetWaveState(EWaveState::WaitingToStart);
 }
 
 
@@ -75,6 +82,9 @@ void ASTGameMode::CheckWaveState()
 	}
 
 	if (!bIsAnyBotAlive) {
+
+		SetWaveState(EWaveState::WaveComplete);
+
 		PrepareForNextWave();
 	}
 }
@@ -103,6 +113,8 @@ void ASTGameMode::GameOver()
 {
 	EndWave();
 
+	SetWaveState(EWaveState::GameOver);
+
 	UE_LOG(LogTemp, Log, TEXT("GAME OVER! Players Died"));
 }
 
@@ -111,7 +123,7 @@ void ASTGameMode::SetWaveState(EWaveState NewWaveState)
 	ASTGameState* GS = GetGameState<ASTGameState>();
 
 	if (ensureAlways(GS)) {
-		GS->WaveState = NewWaveState;
+		GS->SetWaveState(NewWaveState);
 	}
 }
 

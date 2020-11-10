@@ -3,12 +3,14 @@
 
 #include "Components/STHealthComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "STGameMode.h"
 
 // Sets default values for this component's properties
 USTHealthComponent::USTHealthComponent()
 {
 	DefaultHealthPoint = 100.0f;
 
+	bIsDead = false;
 	// 设置多人游戏客户端与服务端数据同步，非常重要
 	SetIsReplicated(true);
 }
@@ -39,15 +41,24 @@ void USTHealthComponent::OnRep_Health(float OldHealthPoint)
 
 void USTHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
-	if (Damage <= 0.0f) {
+	if (Damage <= 0.0f || bIsDead) {
 		return;
 	}
 
 	HealthPoint = FMath::Clamp(HealthPoint - Damage, 0.0f, DefaultHealthPoint);
 
-	 UE_LOG(LogTemp, Log, TEXT("Health Changed: %s"), *FString::SanitizeFloat(HealthPoint));
+	UE_LOG(LogTemp, Log, TEXT("Health Changed: %s"), *FString::SanitizeFloat(HealthPoint));
 
 	OnHealthChanged.Broadcast(this, HealthPoint, Damage, DamageType, InstigatedBy, DamageCauser);
+
+	bIsDead = HealthPoint <= 0.0f;
+
+	if (bIsDead) {
+		ASTGameMode* GM = Cast<ASTGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM) {
+			GM->OnActorKilled.Broadcast(GetOwner(), DamageCauser, InstigatedBy);
+		}
+	}
 }
 
 void USTHealthComponent::Heal(float HealAmount)

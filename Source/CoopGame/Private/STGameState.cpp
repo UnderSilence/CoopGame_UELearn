@@ -10,6 +10,18 @@ void ASTGameState::OnRep_WaveState(EWaveState OldWaveState)
 }
 
 
+void ASTGameState::SetWaveState(EWaveState NewWaveState)
+{
+	if (HasAuthority()) {
+		
+		EWaveState OldWaveState = WaveState;
+
+		WaveState = NewWaveState;
+		// Only call on server
+		OnRep_WaveState(OldWaveState);
+	}
+}
+
 void ASTGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

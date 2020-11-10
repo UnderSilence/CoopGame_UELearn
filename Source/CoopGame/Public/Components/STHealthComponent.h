@@ -22,6 +22,8 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+	bool bIsDead;
 	
 	UPROPERTY(Replicated, ReplicatedUsing=OnRep_Health, BlueprintReadOnly, Category="HealthComponent")
 	float HealthPoint;
