@@ -6,6 +6,9 @@
 #include "GameFramework/GameModeBase.h"
 #include "STGameMode.generated.h"
 
+
+enum class EWaveState : uint8;
+
 /**
  * 
  */
@@ -17,6 +20,8 @@ class COOPGAME_API ASTGameMode : public AGameModeBase
 protected:
 
 	FTimerHandle TimerHandle_BotSpawner;
+
+	FTimerHandle TimerHandle_NextWaveStart;
 
 	// Bots to spawn in single wave
 	int32 NrOfBotToSpawn;
@@ -43,9 +48,19 @@ protected:
 	// Set timer for next wave
 	void PrepareForNextWave();
 
+	void CheckWaveState();
+
+	void CheckAnyPlayerAlive();
+
+	void GameOver();
+
+	void SetWaveState(EWaveState NewWaveState);
+
 public:
 
 	ASTGameMode();
 
 	virtual void StartPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 };
