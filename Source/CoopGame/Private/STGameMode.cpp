@@ -55,6 +55,8 @@ void ASTGameMode::PrepareForNextWave()
 	GetWorldTimerManager().SetTimer(TimerHandle_NextWaveStart, this, &ASTGameMode::StartWave, TimeBetweenWaves, false);
 	
 	SetWaveState(EWaveState::WaitingToStart);
+
+	RemakeDeadPlayers();
 }
 
 
@@ -124,6 +126,16 @@ void ASTGameMode::SetWaveState(EWaveState NewWaveState)
 
 	if (ensureAlways(GS)) {
 		GS->SetWaveState(NewWaveState);
+	}
+}
+
+void ASTGameMode::RemakeDeadPlayers()
+{
+	for (TActorIterator<APlayerController> It(GetWorld(), APlayerController::StaticClass()); It; ++It) {
+		APlayerController* PC = *It;
+		if (PC && PC->GetPawn() == nullptr) {
+			RestartPlayer(PC);
+		}
 	}
 }
 

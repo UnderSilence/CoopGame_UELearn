@@ -58,6 +58,8 @@ protected:
 
 	void SetWaveState(EWaveState NewWaveState);
 
+	void RemakeDeadPlayers();
+
 public:
 
 	ASTGameMode();
